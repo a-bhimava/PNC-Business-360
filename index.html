@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business 360 - PNC Bank Cash Flow Management</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <button class="hamburger" id="hamburgerBtn" aria-label="Toggle navigation menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <h1 class="nav-title">Business 360</h1>
+            <div class="notification-badge" id="notificationBadge"></div>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h2>PNC Business</h2>
+                <button class="close-sidebar" id="closeSidebar">&times;</button>
+            </div>
+            <ul class="sidebar-menu">
+                <li class="menu-item active">
+                    <span class="menu-icon">📊</span>
+                    <span class="menu-text">Business 360</span>
+                </li>
+                <li class="menu-item">
+                    <span class="menu-icon">🏠</span>
+                    <span class="menu-text">Dashboard</span>
+                </li>
+                <li class="menu-item">
+                    <span class="menu-icon">💳</span>
+                    <span class="menu-text">Payments</span>
+                </li>
+                <li class="menu-item">
+                    <span class="menu-icon">📈</span>
+                    <span class="menu-text">Reports</span>
+                </li>
+                <li class="menu-item">
+                    <span class="menu-icon">⚙️</span>
+                    <span class="menu-text">Settings</span>
+                </li>
+            </ul>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Hero Section - Cash Flow Graph -->
+        <section class="hero-section" id="heroSection">
+            <!-- Account Filter Badge -->
+            <div class="account-filter">
+                <div class="filter-badge">
+                    <img src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%2321808D'%3E%3Ctext x='12' y='16' text-anchor='middle' font-size='14' font-weight='bold'%3EPNC%3C/text%3E%3C/svg%3E" alt="PNC Logo" class="bank-logo">
+                    <span>PNC Bank Only</span>
+                    <button class="info-icon" id="infoIcon" aria-label="Account connection information">ⓘ</button>
+                </div>
+                <div class="last-updated">Last updated: 2m</div>
+            </div>
+
+            <!-- Cash Flow Graph Container -->
+            <div class="graph-container">
+                <div class="graph-header">
+                    <h2>Cash Flow Trend (Last 30 Days)</h2>
+                    <div class="current-balance">$42,350</div>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="cashFlowChart" aria-label="Cash flow trend chart for last 30 days"></canvas>
+                </div>
+                
+                <!-- Time Period Selector -->
+                <div class="time-selector">
+                    <button class="time-pill" data-period="7">7D</button>
+                    <button class="time-pill active" data-period="30">30D</button>
+                    <button class="time-pill" data-period="90">90D</button>
+                    <button class="time-pill" data-period="365">1Y</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Insights Panel -->
+        <section class="insights-section" id="insightsSection">
+            <div class="insights-header">
+                <h3>Insights</h3>
+                <a href="#" class="view-all-link">View All →</a>
+            </div>
+            
+            <div class="insights-container">
+                <div class="insight-card warning" data-insight="low-balance">
+                    <div class="insight-icon">⚠️</div>
+                    <div class="insight-content">
+                        <h4>Low balance detected</h4>
+                        <p>Your checking balance ($8,420) is below your typical minimum. Consider moving $5,000 from savings.</p>
+                    </div>
+                    <button class="expand-btn" aria-label="Expand insight details">›</button>
+                    <div class="insight-details">
+                        <div class="detail-actions">
+                            <button class="action-btn primary">Transfer Now</button>
+                            <button class="action-btn secondary">Dismiss</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight-card positive" data-insight="trending-up">
+                    <div class="insight-icon">📈</div>
+                    <div class="insight-content">
+                        <h4>Balance trending up</h4>
+                        <p>Your average daily balance is 15% higher than last month ($38,200 vs $33,200). Great cash management!</p>
+                    </div>
+                    <button class="expand-btn" aria-label="Expand insight details">›</button>
+                    <div class="insight-details">
+                        <div class="comparison-chart">
+                            <div class="bar-chart">
+                                <div class="bar prev-month" style="height: 60%;">
+                                    <span class="bar-label">Last Month: $33,200</span>
+                                </div>
+                                <div class="bar current-month" style="height: 100%;">
+                                    <span class="bar-label">This Month: $38,200</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="insight-card info" data-insight="upcoming-payments">
+                    <div class="insight-icon">💳</div>
+                    <div class="insight-content">
+                        <h4>Upcoming payments</h4>
+                        <p>You have 3 scheduled payments totaling $12,500 in the next 7 days.</p>
+                    </div>
+                    <button class="expand-btn" aria-label="Expand insight details">›</button>
+                    <div class="insight-details">
+                        <div class="payment-schedule">
+                            <div class="payment-item">
+                                <span class="payment-date">Nov 10</span>
+                                <span class="payment-desc">Supplier invoice</span>
+                                <span class="payment-amount">$8,000</span>
+                            </div>
+                            <div class="payment-item">
+                                <span class="payment-date">Nov 12</span>
+                                <span class="payment-desc">Payroll</span>
+                                <span class="payment-amount">$4,200</span>
+                            </div>
+                            <div class="payment-item">
+                                <span class="payment-date">Nov 14</span>
+                                <span class="payment-desc">Rent</span>
+                                <span class="payment-amount">$300</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Upgrade CTA Banner -->
+        <section class="upgrade-cta" id="upgradeCta">
+            <div class="cta-content">
+                <div class="cta-icon">✨</div>
+                <h3>Take Your Business to the Next Level</h3>
+                <p>Unlock hyper-personalized insights by connecting all your business accounts. Get AI-powered forecasting, fraud detection across all banks, and consolidated cash visibility—not just PNC.</p>
+                
+                <div class="benefits-list">
+                    <div class="benefit-item">✓ Consolidate cash from Chase, Wells Fargo, Bank of America, and 12,000+ banks</div>
+                    <div class="benefit-item">✓ AI predicts cash flow 30-90 days ahead with 95% accuracy</div>
+                    <div class="benefit-item">✓ Identify fraud patterns across ALL accounts, not just one bank</div>
+                    <div class="benefit-item">✓ Real-time alerts when balances drop across your entire cash position</div>
+                </div>
+
+                <button class="connect-banks-btn" id="connectBanksBtn" aria-label="Connect additional bank accounts to unlock premium features">
+                    🔗 Connect Additional Bank Accounts →
+                </button>
+                
+                <a href="#" class="learn-more-link">Learn more about premium features →</a>
+            </div>
+            <button class="dismiss-cta" id="dismissCta" aria-label="Dismiss upgrade banner">&times;</button>
+        </section>
+
+        <!-- Feature Cards -->
+        <section class="features-section" id="featuresSection">
+            <h3 class="section-title">Explore Features</h3>
+            
+            <div class="features-grid">
+                <div class="feature-card premium" data-feature="real-time-balance">
+                    <div class="feature-icon">💰</div>
+                    <h4>Real-Time Balance</h4>
+                    <p>View all account balances across banks in one place, updated live.</p>
+                    <span class="feature-badge premium">Premium</span>
+                    <div class="feature-arrow">→</div>
+                </div>
+
+                <div class="feature-card premium" data-feature="ai-forecasting">
+                    <div class="feature-icon">🔮</div>
+                    <h4>AI Forecasting</h4>
+                    <p>Predict cash position 7-90 days ahead with ML-powered insights.</p>
+                    <span class="feature-badge premium">Premium</span>
+                    <div class="feature-arrow">→</div>
+                </div>
+
+                <div class="feature-card free" data-feature="fast-payments">
+                    <div class="feature-icon">💸</div>
+                    <h4>Fast Payments</h4>
+                    <p>ACH, wire, mobile check deposit, recurring payments, 24/7.</p>
+                    <span class="feature-badge free">Free</span>
+                    <div class="feature-arrow">→</div>
+                </div>
+
+                <div class="feature-card premium" data-feature="fraud-protection">
+                    <div class="feature-icon">🛡️</div>
+                    <h4>Fraud Protection</h4>
+                    <p>Positive Pay for checks & ACH, anomaly detection, alerts.</p>
+                    <span class="feature-badge premium">Premium</span>
+                    <div class="feature-arrow">→</div>
+                </div>
+
+                <div class="feature-card premium" data-feature="invoice-automation">
+                    <div class="feature-icon">📄</div>
+                    <h4>Invoice Automation</h4>
+                    <p>Auto-generate invoices, payment links, reminders, late fees.</p>
+                    <span class="feature-badge premium">Premium</span>
+                    <div class="feature-arrow">→</div>
+                </div>
+
+                <div class="feature-card premium" data-feature="expense-analytics">
+                    <div class="feature-icon">📊</div>
+                    <h4>Expense Analytics</h4>
+                    <p>Auto-categorize expenses, budgets, trends, tax-ready reports.</p>
+                    <span class="feature-badge premium">Premium</span>
+                    <div class="feature-arrow">→</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal" id="upgradeModal">
+            <div class="modal-header">
+                <h3>Upgrade to Premium</h3>
+                <button class="close-modal" id="closeModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <p>This feature requires a premium subscription. Connect additional bank accounts to unlock advanced insights and multi-bank visibility.</p>
+                <button class="modal-btn primary">Upgrade Now</button>
+                <button class="modal-btn secondary">Learn More</button>
+            </div>
+        </div>
+
+        <div class="modal" id="connectBanksModal">
+            <div class="modal-header">
+                <h3>Connect Your Bank Accounts</h3>
+                <button class="close-modal" id="closeBanksModal">&times;</button>
+            </div>
+            <div class="modal-content">
+                <p>Connect your bank accounts securely to get a complete view of your business cash flow.</p>
+                <div class="bank-grid">
+                    <button class="bank-option">Chase</button>
+                    <button class="bank-option">Wells Fargo</button>
+                    <button class="bank-option">Bank of America</button>
+                    <button class="bank-option">Citibank</button>
+                    <button class="bank-option">US Bank</button>
+                    <button class="bank-option">Other Banks</button>
+                </div>
+                <p class="security-note">🔒 Your data is encrypted and secure. We never store your login credentials.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tooltip -->
+    <div class="tooltip" id="tooltip">
+        <div class="tooltip-content"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
