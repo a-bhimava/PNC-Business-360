@@ -2,7 +2,7 @@
 
 A responsive, interactive mockup of PNC Bank's Business 360 cash flow management dashboard designed for client presentation.
 
-## 🌟 Features
+Link: https://a-bhimava.github.io/PNC-Business-360/
 
 ### Core Functionality
 - **Interactive Cash Flow Chart**: Real-time visualization with hover tooltips and time period selection
@@ -18,7 +18,7 @@ A responsive, interactive mockup of PNC Bank's Business 360 cash flow management
 - **Progressive Enhancement**: Works without JavaScript
 - **GitHub Pages Ready**: Static hosting compatible
 
-## 🎨 Design System
+## Design System
 
 ### Brand Colors
 - **PNC Teal**: `#21808D` (Primary brand color)
@@ -128,14 +128,7 @@ Modify `styles.css` for:
 - Expense analytics
 - Invoice automation
 
-## 🔒 Security & Privacy
 
-- Client-side only implementation
-- No actual bank data transmission
-- Simulated authentication flows
-- HTTPS recommended for production
-
-## 📄 License
 
 This mockup is created for presentation purposes only and contains simulated data and functionality.
 
