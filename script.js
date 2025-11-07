@@ -561,10 +561,24 @@ class Business360App {
             this.showSuccessMessage(`Successfully connected to ${bankName}!`);
             this.closeModal();
             
-            // Simulate UI updates after bank connection
-            setTimeout(() => {
+            // Show gradient animation
+            const gradientOverlay = document.getElementById('gradientOverlay');
+            if (gradientOverlay) {
+                gradientOverlay.classList.add('show');
+
+                setTimeout(() => {
+                    gradientOverlay.classList.add('fade-out');
+
+                    setTimeout(() => {
+                        this.simulateMultiBankView();
+                        gradientOverlay.classList.remove('show');
+                        gradientOverlay.classList.remove('fade-out');
+                    }, 1000); // Fade out duration
+                }, 3000); // Time for the gradient to show
+            } else {
+                // Fallback if gradient overlay is not found
                 this.simulateMultiBankView();
-            }, 1000);
+            }
         }, 2000);
     }
 
