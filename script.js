@@ -671,6 +671,13 @@ class Business360App {
                 badge.classList.add('unlocked');
             }
         });
+
+        // Show hyper-personalized insights
+        const newInsights = document.querySelectorAll('.hyper-personalized-insight');
+        newInsights.forEach(card => {
+            card.style.display = 'block';
+            card.addEventListener('click', () => this.toggleInsightCard(card));
+        });
     }
 
     dismissUpgradeCta() {
