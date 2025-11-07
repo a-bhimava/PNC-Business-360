@@ -3,6 +3,7 @@
 class Business360App {
     constructor() {
         this.chart = null;
+        this.aiChart = null;
         this.currentPeriod = 30;
         this.notifications = ['low-balance'];
         
@@ -57,6 +58,28 @@ class Business360App {
         const dismissCta = document.getElementById('dismissCta');
         dismissCta?.addEventListener('click', () => this.dismissUpgradeCta());
 
+        // AI Chat functionality
+        const aiPromptBtn = document.getElementById('aiPromptBtn');
+        aiPromptBtn?.addEventListener('click', () => this.showAiChatModal());
+
+        const sendChatBtn = document.getElementById('sendChatBtn');
+        sendChatBtn?.addEventListener('click', () => this.sendChatMessage());
+
+        const chatInput = document.getElementById('chatInput');
+        chatInput?.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                this.sendChatMessage();
+            }
+        });
+
+        // Example questions click handlers
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('.example-questions li')) {
+                const question = e.target.textContent;
+                this.sendChatMessage(question);
+            }
+        });
+
         // Modal functionality
         this.setupModalEvents();
 
@@ -88,6 +111,9 @@ class Business360App {
         closeModalBtns.forEach(btn => {
             btn.addEventListener('click', () => this.closeModal());
         });
+
+        const closeAiModal = document.getElementById('closeAiModal');
+        closeAiModal?.addEventListener('click', () => this.closeAiModal());
 
         // Bank option clicks
         const bankOptions = document.querySelectorAll('.bank-option');
@@ -146,35 +172,61 @@ class Business360App {
         const ctx = document.getElementById('cashFlowChart')?.getContext('2d');
         if (!ctx) return;
 
-        const data = this.generateChartData(this.currentPeriod);
+        const data = this.generatePulseLabsData(this.currentPeriod);
         
         this.chart = new Chart(ctx, {
-            type: 'line',
+            type: 'bar',
             data: {
                 labels: data.labels,
-                datasets: [{
-                    label: 'Cash Flow',
-                    data: data.values,
-                    borderColor: '#21808D',
-                    backgroundColor: (context) => {
-                        const chart = context.chart;
-                        const {ctx, chartArea} = chart;
-                        if (!chartArea) return null;
-                        
-                        const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
-                        gradient.addColorStop(0, 'rgba(33, 128, 141, 0.05)');
-                        gradient.addColorStop(0.5, 'rgba(33, 128, 141, 0.15)');
-                        gradient.addColorStop(1, 'rgba(33, 128, 141, 0.3)');
-                        return gradient;
+                datasets: [
+                    {
+                        label: 'Total Income',
+                        data: data.income,
+                        backgroundColor: '#22C55E', // Green for income
+                        borderRadius: 4,
+                        order: 2
                     },
-                    fill: true,
-                    tension: 0.4,
-                    pointBackgroundColor: '#21808D',
-                    pointBorderColor: '#ffffff',
-                    pointBorderWidth: 2,
-                    pointRadius: 4,
-                    pointHoverRadius: 6
-                }]
+                    {
+                        label: 'Total Expenses',
+                        data: data.expenses,
+                        backgroundColor: '#EF4444', // Red for expenses
+                        borderRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Cash on Hand',
+                        data: data.cashOnHand,
+                        type: 'line',
+                        borderColor: '#3B82F6', // Blue for cash line
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#3B82F6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8,
+                        order: 1,
+                        yAxisID: 'y1'
+                    },
+                    {
+                        label: 'PNC Bank Projections',
+                        data: data.projections,
+                        type: 'line',
+                        borderColor: '#6B7280', // Gray for projections
+                        backgroundColor: 'transparent',
+                        borderDash: [8, 4],
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#6B7280',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        order: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
             },
             options: {
                 responsive: true,
@@ -184,27 +236,24 @@ class Business360App {
                         display: false
                     },
                     tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
                         titleColor: 'white',
                         bodyColor: 'white',
                         borderColor: '#21808D',
                         borderWidth: 1,
                         cornerRadius: 8,
-                        displayColors: false,
+                        displayColors: true,
                         callbacks: {
                             title: function(context) {
                                 return context[0].label;
                             },
                             label: function(context) {
-                                return `$${context.parsed.y.toLocaleString()}`;
-                            },
-                            afterLabel: function(context) {
-                                const currentValue = context.parsed.y;
-                                const previousIndex = Math.max(0, context.dataIndex - 1);
-                                const previousValue = context.dataset.data[previousIndex];
-                                const change = currentValue - previousValue;
-                                const symbol = change >= 0 ? '↑' : '↓';
-                                return `${symbol} $${Math.abs(change).toLocaleString()} from previous day`;
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                label += '$' + context.parsed.y.toLocaleString();
+                                return label;
                             }
                         }
                     }
@@ -222,11 +271,14 @@ class Business360App {
                         ticks: {
                             color: '#626464',
                             font: {
-                                size: 12
+                                size: 11
                             }
                         }
                     },
                     y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
                         grid: {
                             color: '#E5E5E5',
                             lineWidth: 1
@@ -234,10 +286,28 @@ class Business360App {
                         ticks: {
                             color: '#626464',
                             font: {
-                                size: 12
+                                size: 11
                             },
                             callback: function(value) {
-                                return '$' + value.toLocaleString();
+                                return '$' + (value/1000).toFixed(0) + 'K';
+                            }
+                        },
+                        max: Math.max(...data.income, ...data.expenses) * 1.1
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            color: '#626464',
+                            font: {
+                                size: 11
+                            },
+                            callback: function(value) {
+                                return '$' + (value/1000).toFixed(0) + 'K';
                             }
                         }
                     }
@@ -287,6 +357,57 @@ class Business360App {
         return { labels, values };
     }
 
+    generatePulseLabsData(period) {
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov'];
+        const labels = [];
+        const income = [];
+        const expenses = [];
+        const cashOnHand = [];
+        const projections = [];
+        
+        // Data based on the Pulse Labs screenshot
+        const monthlyData = [
+            { income: 70000, expenses: 65000, cash: 85000 },
+            { income: 75000, expenses: 61000, cash: 88000 },
+            { income: 74000, expenses: 65500, cash: 103000 },
+            { income: 69000, expenses: 80000, cash: 114000 },
+            { income: 79000, expenses: 65000, cash: 102000 },
+            { income: 71000, expenses: 59500, cash: 115000 },
+            { income: 79000, expenses: 67000, cash: 124000 },
+            { income: 70000, expenses: 95000, cash: 137000 },
+            { income: 69500, expenses: 121000, cash: 112000 },
+            { income: 40000, expenses: 25000, cash: 61000 },
+            { income: 0, expenses: 0, cash: 74000 } // Projected
+        ];
+        
+        let currentCash = 84849; // Starting cash
+        
+        for (let i = 0; i < Math.min(11, monthlyData.length); i++) {
+            labels.push(months[i]);
+            income.push(monthlyData[i].income);
+            expenses.push(monthlyData[i].expenses);
+            
+            // Calculate cash on hand progression
+            currentCash += (monthlyData[i].income - monthlyData[i].expenses);
+            cashOnHand.push(currentCash);
+            
+            // Add projections for future months (last 2-3 months)
+            if (i >= 8) {
+                projections.push(currentCash + (Math.random() - 0.5) * 10000);
+            } else {
+                projections.push(null);
+            }
+        }
+        
+        return {
+            labels,
+            income,
+            expenses,
+            cashOnHand,
+            projections
+        };
+    }
+
     changeTimePeriod(period) {
         this.currentPeriod = parseInt(period);
         
@@ -295,18 +416,46 @@ class Business360App {
             pill.classList.toggle('active', pill.dataset.period === period);
         });
         
-        // Update chart
-        const data = this.generateChartData(this.currentPeriod);
+        // Update chart with new Pulse Labs data
+        const data = this.generatePulseLabsData(this.currentPeriod);
         this.chart.data.labels = data.labels;
-        this.chart.data.datasets[0].data = data.values;
+        this.chart.data.datasets[0].data = data.income;
+        this.chart.data.datasets[1].data = data.expenses;
+        this.chart.data.datasets[2].data = data.cashOnHand;
+        this.chart.data.datasets[3].data = data.projections;
         this.chart.update('active');
         
-        // Update current balance
-        const currentBalance = document.querySelector('.current-balance');
-        if (currentBalance && data.values.length > 0) {
-            const latestValue = data.values[data.values.length - 1];
-            currentBalance.textContent = `$${latestValue.toLocaleString()}`;
-            this.animateNumber(currentBalance, latestValue);
+        // Update summary values
+        this.updateSummaryValues(data);
+    }
+
+    updateSummaryValues(data) {
+        // Update chart summary section
+        const summaryValues = document.querySelectorAll('.summary-value');
+        if (summaryValues.length >= 4) {
+            const totalIncome = data.income.reduce((sum, val) => sum + val, 0);
+            const totalExpenses = data.expenses.reduce((sum, val) => sum + val, 0);
+            const beginningCash = 84849;
+            const endingCash = data.cashOnHand[data.cashOnHand.length - 1];
+            
+            summaryValues[0].textContent = beginningCash.toLocaleString();
+            summaryValues[1].textContent = totalIncome.toLocaleString();
+            summaryValues[2].textContent = totalExpenses.toLocaleString();
+            summaryValues[3].textContent = endingCash.toLocaleString();
+        }
+        
+        // Update monthly averages
+        const avgItems = document.querySelectorAll('.avg-item');
+        if (avgItems.length >= 4) {
+            const avgIncome = data.income.reduce((sum, val) => sum + val, 0) / data.income.length;
+            const avgExpenses = data.expenses.reduce((sum, val) => sum + val, 0) / data.expenses.length;
+            const avgCashStart = 104084;
+            const avgCashEnd = 103068;
+            
+            avgItems[0].textContent = avgCashStart.toLocaleString();
+            avgItems[1].textContent = Math.round(avgIncome).toLocaleString();
+            avgItems[2].textContent = Math.round(avgExpenses).toLocaleString();
+            avgItems[3].textContent = avgCashEnd.toLocaleString();
         }
     }
 
@@ -341,10 +490,10 @@ class Business360App {
     }
 
     handleFeatureClick(card) {
-        const isPremium = card.classList.contains('premium');
+        const isLocked = card.classList.contains('locked');
         const featureName = card.dataset.feature;
         
-        if (isPremium) {
+        if (isLocked) {
             this.showUpgradeModal(featureName);
         } else {
             // Handle free feature clicks
@@ -511,14 +660,14 @@ class Business360App {
         // Hide upgrade CTA
         this.dismissUpgradeCta();
         
-        // Add premium indicators to feature cards
-        document.querySelectorAll('.feature-card.premium').forEach(card => {
-            card.classList.remove('premium');
+        // Add unlocked indicators to feature cards
+        document.querySelectorAll('.feature-card.locked').forEach(card => {
+            card.classList.remove('locked');
             card.classList.add('unlocked');
             const badge = card.querySelector('.feature-badge');
             if (badge) {
                 badge.textContent = 'Unlocked';
-                badge.classList.remove('premium');
+                badge.classList.remove('locked');
                 badge.classList.add('unlocked');
             }
         });
@@ -651,8 +800,11 @@ class Business360App {
         if (event.key === 'Escape') {
             const sidebar = document.getElementById('sidebar');
             const modalOverlay = document.getElementById('modalOverlay');
+            const aiChatModal = document.getElementById('aiChatModal');
             
-            if (modalOverlay?.classList.contains('active')) {
+            if (aiChatModal?.classList.contains('active')) {
+                this.closeAiModal();
+            } else if (modalOverlay?.classList.contains('active')) {
                 this.closeModal();
             } else if (sidebar?.classList.contains('open')) {
                 this.closeSidebar();
@@ -664,6 +816,241 @@ class Business360App {
             // Add visible focus indicators for keyboard navigation
             document.body.classList.add('keyboard-navigation');
         }
+    }
+
+    showAiChatModal() {
+        const aiChatModal = document.getElementById('aiChatModal');
+        const modalOverlay = document.getElementById('modalOverlay');
+        
+        if (aiChatModal && modalOverlay) {
+            modalOverlay.classList.add('active');
+            aiChatModal.style.display = 'block';
+            aiChatModal.classList.add('active');
+            
+            // Initialize mini chart
+            setTimeout(() => {
+                this.initializeAiChart();
+            }, 100);
+        }
+    }
+
+    closeAiModal() {
+        const aiChatModal = document.getElementById('aiChatModal');
+        const modalOverlay = document.getElementById('modalOverlay');
+        
+        if (aiChatModal && modalOverlay) {
+            modalOverlay.classList.remove('active');
+            aiChatModal.style.display = 'none';
+            aiChatModal.classList.remove('active');
+        }
+    }
+
+    initializeAiChart() {
+        const ctx = document.getElementById('aiMiniChart')?.getContext('2d');
+        if (!ctx) return;
+
+        const data = this.generatePulseLabsData(this.currentPeriod);
+        
+        this.aiChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.labels,
+                datasets: [
+                    {
+                        label: 'Total Income',
+                        data: data.income,
+                        backgroundColor: '#22C55E',
+                        borderRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Total Expenses',
+                        data: data.expenses,
+                        backgroundColor: '#EF4444',
+                        borderRadius: 4,
+                        order: 2
+                    },
+                    {
+                        label: 'Cash on Hand',
+                        data: data.cashOnHand,
+                        type: 'line',
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        fill: false,
+                        tension: 0.4,
+                        pointBackgroundColor: '#3B82F6',
+                        pointBorderColor: '#ffffff',
+                        pointBorderWidth: 2,
+                        pointRadius: 4,
+                        pointHoverRadius: 6,
+                        order: 1,
+                        yAxisID: 'y1'
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: {
+                            color: '#E5E5E5'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        grid: {
+                            color: '#E5E5E5'
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value/1000).toFixed(0) + 'K';
+                            }
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        grid: {
+                            drawOnChartArea: false
+                        },
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + (value/1000).toFixed(0) + 'K';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    sendChatMessage(message = null) {
+        const chatInput = document.getElementById('chatInput');
+        const sendBtn = document.getElementById('sendChatBtn');
+        const chatMessages = document.getElementById('chatMessages');
+        
+        const userMessage = message || chatInput?.value.trim();
+        if (!userMessage) return;
+        
+        // Clear input
+        if (chatInput) chatInput.value = '';
+        
+        // Add user message
+        this.addChatMessage(userMessage, 'user');
+        
+        // Disable send button and show typing
+        if (sendBtn) sendBtn.disabled = true;
+        this.showTypingIndicator();
+        
+        // Simulate AI response
+        setTimeout(() => {
+            const response = this.generateAiResponse(userMessage);
+            this.hideTypingIndicator();
+            this.addChatMessage(response, 'ai');
+            if (sendBtn) sendBtn.disabled = false;
+        }, 1500 + Math.random() * 1000);
+    }
+
+    addChatMessage(message, type) {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `${type}-message`;
+        
+        const avatar = document.createElement('div');
+        avatar.className = 'message-avatar';
+        avatar.textContent = type === 'ai' ? '🤖' : '👤';
+        
+        const content = document.createElement('div');
+        content.className = 'message-content';
+        content.innerHTML = `<p>${message}</p>`;
+        
+        messageDiv.appendChild(avatar);
+        messageDiv.appendChild(content);
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    showTypingIndicator() {
+        const chatMessages = document.getElementById('chatMessages');
+        if (!chatMessages) return;
+        
+        const typingDiv = document.createElement('div');
+        typingDiv.className = 'ai-message typing-indicator';
+        typingDiv.id = 'typingIndicator';
+        
+        typingDiv.innerHTML = `
+            <div class="message-avatar">🤖</div>
+            <div class="message-content">
+                <div class="typing-indicator">
+                    AI is thinking
+                    <span class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </span>
+                </div>
+            </div>
+        `;
+        
+        chatMessages.appendChild(typingDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    hideTypingIndicator() {
+        const typingIndicator = document.getElementById('typingIndicator');
+        if (typingIndicator) {
+            typingIndicator.remove();
+        }
+    }
+
+    generateAiResponse(message) {
+        const lowerMessage = message.toLowerCase();
+        
+        // Simple response generation based on keywords
+        if (lowerMessage.includes('expense') && lowerMessage.includes('september')) {
+            return "I can see that September had a significant expense spike to $121K, which is much higher than your average of $71K. This appears to be driven by one-time costs. Would you like me to analyze the specific categories driving this increase?";
+        }
+        
+        if (lowerMessage.includes('cash flow') || lowerMessage.includes('positive')) {
+            return "Based on your current data, your cash flow shows some volatility but maintains an overall positive trajectory. Your ending cash position of $74.7K is lower than the beginning period, primarily due to the September expense spike. I'd recommend focusing on expense management in Q4.";
+        }
+        
+        if (lowerMessage.includes('reduce') && lowerMessage.includes('expense')) {
+            return "Great question! If you reduce expenses by 15%, that would save approximately $10.7K monthly based on your average. This could improve your ending cash position from $74.7K to around $85K, providing a much healthier buffer for operations.";
+        }
+        
+        if (lowerMessage.includes('forecast') || lowerMessage.includes('predict')) {
+            return "Based on your historical patterns, I predict your cash flow will stabilize around $70-80K monthly if you maintain current income levels and control the expense volatility we saw in September. Your PNC projections show a conservative outlook that aligns with this analysis.";
+        }
+        
+        if (lowerMessage.includes('income')) {
+            return "Your income shows good consistency, averaging $70.2K monthly with a range of $40K-$79K. The dip in October appears to be seasonal, but your core business income remains stable. I'd suggest exploring ways to boost the lower months.";
+        }
+        
+        // Default responses
+        const defaultResponses = [
+            "That's an interesting question about your cash flow data. Based on the chart, I can see several trends that might be relevant. Could you be more specific about which aspect you'd like me to analyze?",
+            "Looking at your financial data, I notice some patterns in your cash flow. What specific insights are you looking for to help with your business decisions?",
+            "Your cash flow data shows both opportunities and areas for attention. I'd be happy to dive deeper into any specific metrics or time periods you're concerned about."
+        ];
+        
+        return defaultResponses[Math.floor(Math.random() * defaultResponses.length)];
     }
 }
 
