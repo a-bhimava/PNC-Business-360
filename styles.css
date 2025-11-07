@@ -13,7 +13,7 @@
     --card-foreground: oklch(0.2686 0 0);
     --popover: oklch(1.0000 0 0);
     --popover-foreground: oklch(0.2686 0 0);
-    --primary: oklch(0.7686 0.1647 70.0804);
+    --primary: #008080;
     --primary-foreground: oklch(0.5371 0.1168 273.7510);
     --secondary: oklch(0.9670 0.0029 264.5419);
     --secondary-foreground: oklch(0.4461 0.0263 256.8018);
@@ -1030,6 +1030,11 @@ button:focus-visible {
 .feature-icon {
     font-size: 2.5rem;
     margin-bottom: var(--spacing-md);
+}
+
+.feature-icon img {
+    width: 40px;
+    height: 40px;
 }
 
 .feature-card h4 {
